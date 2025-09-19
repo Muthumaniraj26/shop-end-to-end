@@ -170,42 +170,25 @@ def pay_cart():
     cur = conn.cursor()
 
     if request.method == "POST":
-        # fetch all cart items
+        # handle payment
         cur.execute("SELECT product_id, qty FROM cart;")
         items = cur.fetchall()
-
-        if not items:
-            flash("Your cart is empty.")
-            return redirect(url_for("shopkeeper_dashboard"))
-
         for pid, qty in items:
-            # deduct stock in products
-            cur.execute(
-                "UPDATE products SET stock = stock - %s WHERE id = %s",
-                (qty, pid)
-            )
-            # record sale (adjust this table to your schema)
-            cur.execute(
-                "INSERT INTO sales (product_id, qty) VALUES (%s,%s)",
-                (pid, qty)
-            )
-
-        # empty cart
+            cur.execute("UPDATE products SET stock=stock-%s WHERE id=%s",(qty,pid))
+            cur.execute("INSERT INTO sales (product_id,qty) VALUES (%s,%s)",(pid,qty))
         cur.execute("DELETE FROM cart;")
-
         conn.commit()
         cur.close()
         conn.close()
-
-        flash("Payment successful, stock updated.")
+        flash("Payment successful")
         return redirect(url_for("shopkeeper_dashboard"))
 
     else:
-        # show confirmation page
+        # handle GET: show confirmation page (safe to show empty cart)
         cur.execute("""
-            SELECT c.product_id, p.name, c.qty, p.price
+            SELECT c.product_id,p.name,c.qty,p.price
             FROM cart c
-            JOIN products p ON c.product_id = p.id
+            JOIN products p ON c.product_id=p.id
         """)
         cart_items = cur.fetchall()
         cur.close()
@@ -216,7 +199,8 @@ def pay_cart():
 
 
 
-@app.route("/cart/back")
+
+@app.route("/cart/back", methods=["GET", "POST"])
 def back_cart():
     conn = get_db()
     cur = conn.cursor()
@@ -225,6 +209,7 @@ def back_cart():
     conn.close()
     flash("Cart cleared and products restored.")
     return redirect(url_for("shopkeeper_dashboard"))
+
 # --- Add to Cart ---
 @app.route("/worker")
 def worker_dashboard():
