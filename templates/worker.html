@@ -1,0 +1,23 @@
+<!doctype html>
+<title>Worker</title>
+<h2>Worker: {{username}}</h2>
+<a href="/logout">Logout</a>
+<hr>
+
+<h3>Add Product</h3>
+<form method="post" action="/worker/add_product">
+  Name: <input name="name" required>
+  Price: <input name="price" type="number" required>
+  Stock: <input name="stock" type="number" required>
+  <button type="submit">Add</button>
+</form>
+
+<h3>Products</h3>
+<table border="1">
+<tr><th>ID</th><th>Name</th><th>Price</th><th>Stock</th></tr>
+{% for p in products %}
+<tr>
+<td>{{p[0]}}</td><td>{{p[1]}}</td><td>{{p[2]}}</td><td>{{p[3]}}</td>
+</tr>
+{% endfor %}
+</table>

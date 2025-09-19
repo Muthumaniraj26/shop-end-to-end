@@ -1,0 +1,25 @@
+<!doctype html>
+<title>Shopkeeper</title>
+<h1>Shopkeeper: {{ username }}</h1>
+<a href="{{ url_for('logout') }}">Logout</a>
+
+<h2>Products to sell</h2>
+<table border="1">
+    <tr>
+        <th>ID</th><th>Name</th><th>Price</th><th>Stock</th><th>Sell</th>
+    </tr>
+    {% for p in products %}
+    <tr>
+        <td>{{ p[0] }}</td>
+        <td>{{ p[1] }}</td>
+        <td>{{ p[2] }}</td>
+        <td>{{ p[3] }}</td>
+        <td>
+            <form action="{{ url_for('shopkeeper_sell_product', pid=p[0]) }}" method="POST">
+                <input type="number" name="qty" value="1" min="1" max="{{ p[3] }}">
+                <button type="submit">Sell</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</table>

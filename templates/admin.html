@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard</title>
+    <style>
+        table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+            padding: 5px;
+        }
+        input, select { margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Welcome, {{ username }} (Admin)</h1>
+    <a href="{{ url_for('logout') }}">Logout</a>
+
+    <!-- Add User Form -->
+    <h2>Add User</h2>
+    <form action="{{ url_for('admin_add_user_form') }}" method="POST">
+        Username: <input type="text" name="username" required>
+        Password: <input type="password" name="password" required>
+        Role: 
+        <select name="role" required>
+            <option value="worker">Worker</option>
+            <option value="shopkeeper">Shopkeeper</option>
+        </select>
+        <button type="submit">Add User</button>
+    </form>
+
+    <!-- Users Table -->
+    <h2>Users</h2>
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Username</th>
+            <th>Role</th>
+            <th>Action</th>
+        </tr>
+        {% for u in users %}
+        <tr>
+            <td>{{ u[0] }}</td>
+            <td>{{ u[1] }}</td>
+            <td>{{ u[2] }}</td>
+            <td>
+                <a href="{{ url_for('admin_delete_user', user_id=u[0]) }}" onclick="return confirm('Delete user {{ u[1] }}?')">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+        {% if users|length == 0 %}
+        <tr>
+            <td colspan="4">No users found</td>
+        </tr>
+        {% endif %}
+    </table>
+
+    <!-- Add Product Form -->
+    <h2>Add Product</h2>
+    <form action="{{ url_for('admin_add_product') }}" method="POST">
+        Name: <input type="text" name="name" required>
+        Price: <input type="text" name="price" required>
+        Stock: <input type="text" name="stock" required>
+        <button type="submit">Add Product</button>
+    </form>
+
+    <!-- Products Table -->
+    <h2>Products</h2>
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>Action</th>
+        </tr>
+        {% for p in products %}
+        <tr>
+            <td>{{ p[0] }}</td>
+            <td>{{ p[1] }}</td>
+            <td>{{ p[2] }}</td>
+            <td>{{ p[3] }}</td>
+            <td>
+                <a href="{{ url_for('admin_delete_product', pid=p[0]) }}" onclick="return confirm('Delete product {{ p[1] }}?')">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+        {% if products|length == 0 %}
+        <tr>
+            <td colspan="5">No products found</td>
+        </tr>
+        {% endif %}
+    </table>
+</body>
+</html>
