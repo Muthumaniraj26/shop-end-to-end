@@ -5,11 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shopkeeper Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
+     <style>
         :root {
             --primary: #4361ee;
             --secondary: #3f37c9;
             --success: #4cc9f0;
+            --danger: #f72585;
+            --warning: #f8961e;
             --light: #f8f9fa;
             --dark: #212529;
             --gray: #6c757d;
@@ -98,7 +100,20 @@
             gap: 10px;
         }
         
-        /* Products Table */
+        /* Grid Layout */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 992px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Card Styles */
         .card {
             background: white;
             border-radius: 8px;
@@ -122,6 +137,7 @@
             overflow-x: auto;
         }
         
+        /* Products Table */
         .products-table {
             width: 100%;
             border-collapse: collapse;
@@ -176,70 +192,101 @@
             text-align: center;
         }
         
-        .sell-btn {
-            background-color: var(--primary);
-            color: white;
-            border: none;
+        .btn {
             padding: 0.5rem 1rem;
+            border: none;
             border-radius: 4px;
             cursor: pointer;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             gap: 5px;
             transition: var(--transition);
+            font-weight: 500;
         }
         
-        .sell-btn:hover {
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
             background-color: var(--secondary);
+        }
+        
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #218838;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c82333;
         }
         
         .sell-form {
             display: flex;
             gap: 5px;
         }
-         .sidebar-header {
-            padding: 0 20px 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex;
-            align-items: center;
+        
+        /* Cart Styles */
+        .cart-table {
+            width: 100%;
+            border-collapse: collapse;
         }
         
-        .sidebar-header h3 {
-            margin-left: 10px;
+        .cart-table th {
+            background-color: #f1f5fd;
+            text-align: left;
+            padding: 0.75rem;
             font-weight: 600;
+            color: var(--gray);
+            border-bottom: 2px solid var(--border);
+            font-size: 0.9rem;
         }
         
-        .sidebar-menu {
-            padding: 20px 0;
+        .cart-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
         }
         
-        .sidebar-menu ul {
-            list-style: none;
+        .cart-table tr:last-child td {
+            border-bottom: none;
         }
         
-        .sidebar-menu li {
-            margin-bottom: 5px;
+        .cart-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
         }
         
-        .sidebar-menu a {
-            display: block;
-            padding: 12px 20px;
-            color: rgba(255, 255, 255, 0.9);
-            text-decoration: none;
-            transition: all 0.3s;
-            border-left: 4px solid transparent;
+        .cart-total {
+            font-weight: 600;
+            padding: 10px 0;
+            border-top: 2px solid var(--border);
+            margin-top: 10px;
+            text-align: right;
         }
         
-        .sidebar-menu a:hover, .sidebar-menu a.active {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border-left: 4px solid var(--success);
-        }
-        
-        .sidebar-menu i {
-            margin-right: 10px;
-            width: 20px;
+        /* Empty cart message */
+        .empty-cart {
             text-align: center;
+            padding: 2rem;
+            color: var(--gray);
+        }
+        
+        .empty-cart i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--border);
         }
         
         /* Responsive Design */
@@ -260,6 +307,15 @@
                 flex-direction: column;
                 gap: 10px;
                 text-align: center;
+            }
+            
+            .cart-actions {
+                flex-direction: column;
+            }
+            
+            .cart-actions .btn {
+                width: 100%;
+                justify-content: center;
             }
         }
         
@@ -282,35 +338,40 @@
     </style>
 </head>
 <body>
-    <header>
-        <div class="container">
-            <div class="header-content">
-                <div class="welcome">
-                    <i class="fas fa-store"></i>
-                    <h1>Shopkeeper: {{ username }}</h1>
-                </div>
-                <a href="{{ url_for('logout') }}" class="logout-btn">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </a>
+<header>
+    <div class="container">
+        <div class="header-content">
+            <div class="welcome">
+                <i class="fas fa-store"></i>
+                <h1>Shopkeeper: {{ username }}</h1>
             </div>
+           <a href="{{ url_for('logout') }}" class="user-btn logout">
+            <i class="fas fa-sign-out-alt"></i> Logout
+          </a>
         </div>
-    </header>
-    
-    <main class="dashboard">
-        <div class="container">
-            <div class="dashboard-header">
-                <h2 class="dashboard-title">
-                    <i class="fas fa-box-open"></i> Products Inventory
-                </h2>
-            </div>
-            
-            <div class="card">
-                <div class="card-header">
-                    <i class="fas fa-list"></i> Products Available for Sale
-                </div>
-                <div class="card-body">
-                    <table class="products-table">
-                        <thead>
+    </div>
+</header>
+
+<main class="dashboard">
+    <div class="container">
+        <div class="dashboard-header">
+            <h2 class="dashboard-title">
+                <i class="fas fa-box-open"></i> Products Inventory
+            </h2>
+            <input type="text" id="searchInput" placeholder="Search products..."
+                   style="padding:.5rem;border:1px solid #ccc;border-radius:4px;">
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Products Column -->
+            <div>
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-list"></i> Products Available for Sale
+                    </div>
+                    <div class="card-body">
+                        <table class="products-table">
+                            <thead>
                             <tr>
                                 <th>ID</th>
                                 <th>Name</th>
@@ -318,56 +379,139 @@
                                 <th>Stock</th>
                                 <th>Action</th>
                             </tr>
-                        </thead>
-                        <tbody>
+                            </thead>
+                            <tbody>
                             {% for p in products %}
+                                <tr>
+                                    <td>#{{ p.id }}</td>
+                                    <td>{{ p.name }}</td>
+                                    <td>${{ p.price }}</td>
+                                    <td>
+                                        <div class="stock-info">
+                                            <i class="fas fa-box{% if p.stock > 10 %} stock-high{% elif p.stock > 5 %} stock-medium{% else %} stock-low{% endif %}"></i>
+                                            {{ p.stock }} units
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if p.stock > 0 %}
+                                        <form class="sell-form" action="{{ url_for('add_to_cart', pid=p.id) }}" method="POST">
+                                            <input type="number" class="qty-input" name="qty" value="1" min="1" max="{{ p.stock }}">
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-cart-plus"></i> Add to Cart
+                                            </button>
+                                        </form>
+                                        {% else %}
+                                        <form action="{{ url_for('request_refill', pid=p.id) }}" method="POST">
+                                            <button type="submit" class="btn btn-warning">
+                                                <i class="fas fa-truck"></i> Request Refill
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cart Column -->
+            <div>
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-shopping-cart"></i> Cart
+                    </div>
+                    <div class="card-body">
+                        {% if cart %}
+                        <table class="cart-table">
+                            <thead>
                             <tr>
-                                <td>#{{ p[0] }}</td>
-                                <td>{{ p[1] }}</td>
-                                <td>${{ p[2] }}</td>
-                                <td>
-                                    <div class="stock-info">
-                                        <i class="fas fa-box{% if p[3] > 10 %} stock-high{% elif p[3] > 5 %} stock-medium{% else %} stock-low{% endif %}"></i>
-                                        {{ p[3] }} units
-                                    </div>
-                                </td>
-                                <td>
-                                    <form class="sell-form" action="{{ url_for('shopkeeper_sell_product', pid=p[0]) }}" method="POST">
-                                        <input type="number" class="qty-input" name="qty" value="1" min="1" max="{{ p[3] }}">
-                                        <button type="submit" class="sell-btn">
-                                            <i class="fas fa-cash-register"></i> Sell
-                                        </button>
-                                    </form>
-                                </td>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Qty</th>
+                                <th>Price</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for c in cart %}
+                            <tr>
+                                <td>#{{ c.id }}</td>
+                                <td>{{ c.name }}</td>
+                                <td>{{ c.qty }}</td>
+                                <td>${{ c.price * c.qty }}</td>
                             </tr>
                             {% endfor %}
-                        </tbody>
-                    </table>
+                            </tbody>
+                        </table>
+                        <div class="cart-total">
+                            Total: ${{ cart|map(attribute='price')|sum }}
+                        <div class="cart-actions">
+    <form action="{{ url_for('pay_cart') }}" method="post" style="display:inline;">
+        <button type="submit" class="btn btn-success">
+            <i class="fas fa-credit-card"></i> Pay
+        </button>
+    </form>
+    <form action="{{ url_for('back_cart') }}" method="post" style="display:inline;">
+        <button type="submit" class="btn btn-danger">
+            <i class="fas fa-undo"></i> Back
+        </button>
+    </form>
+</div>
+
+
+                        {% else %}
+                        <div class="empty-cart">
+                            <i class="fas fa-shopping-cart"></i>
+                            <h3>Your cart is empty</h3>
+                            <p>Add products from the list</p>
+                        </div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
-    </main>
+    </div>
+</main>
 
-    <script>
-        // Add confirmation before selling a product
-        document.querySelectorAll('.sell-form').forEach(form => {
-            form.addEventListener('submit', function(e) {
-                const qtyInput = this.querySelector('input[name="qty"]');
-                const productName = this.closest('tr').querySelector('td:nth-child(2)').textContent;
-                
-                if (!confirm(`Confirm sale of ${qtyInput.value} unit(s) of ${productName}?`)) {
-                    e.preventDefault();
-                }
-            });
+<script>
+    // confirmation add to cart
+    document.querySelectorAll('.sell-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            const qtyInput = this.querySelector('input[name="qty"]');
+            const productName = this.closest('tr').querySelector('td:nth-child(2)').textContent;
+            if (!confirm(`Add ${qtyInput.value} unit(s) of ${productName} to cart?`)) {
+                e.preventDefault();
+            }
         });
-        
-        // Add input validation for quantity
-        document.querySelectorAll('.qty-input').forEach(input => {
-            input.addEventListener('change', function() {
-                if (this.value < 1) this.value = 1;
-                if (this.value > parseInt(this.max)) this.value = this.max;
-            });
+    });
+
+    // quantity input validation
+    document.querySelectorAll('.qty-input').forEach(input => {
+        input.addEventListener('change', function() {
+            if (this.value < 1) this.value = 1;
+            if (this.value > parseInt(this.max)) this.value = this.max;
         });
-    </script>
+    });
+
+    // confirm pay and back
+    document.querySelectorAll('a[href*="pay_cart"], a[href*="back_cart"]').forEach(link => {
+        link.addEventListener('click', function(e) {
+            const action = this.href.includes('pay_cart') ? 'pay for' : 'clear';
+            if (!confirm(`Are you sure you want to ${action} your cart?`)) {
+                e.preventDefault();
+            }
+        });
+    });
+
+    // live search filter
+    document.getElementById('searchInput').addEventListener('keyup', function () {
+        let filter = this.value.toLowerCase();
+        document.querySelectorAll('.products-table tbody tr').forEach(row => {
+            const nameCell = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+            row.style.display = nameCell.includes(filter) ? '' : 'none';
+        });
+    });
+</script>
 </body>
 </html>
