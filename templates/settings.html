@@ -1,0 +1,74 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Settings</title>
+  <style>
+    body { font-family: Arial; padding:20px; max-width:800px; margin:auto; }
+    .card { background:#fafafa; padding:12px; border-radius:6px; margin-bottom:12px; }
+    input, button { padding:8px; margin:6px 0; width:100%; }
+    .two { display:flex; gap:10px; }
+    .two input { width:50%; }
+    table { width:100%; border-collapse:collapse; margin-top:8px; }
+    th, td { border:1px solid #ddd; padding:8px; }
+  </style>
+</head>
+<body>
+  <h2>Settings</h2>
+  <p><strong>User:</strong> {{ user.username }} | <strong>Role:</strong> {{ user.role }} | <a href="{{ url_for('logout') }}">Logout</a></p>
+
+  {% if message %}
+    <div style="background:#e6ffe6;padding:8px;border-radius:6px;margin-bottom:10px">{{ message }}</div>
+  {% endif %}
+
+  <div class="card">
+    <h3>Change Password</h3>
+    <form method="post">
+      <input type="hidden" name="action" value="change_password">
+      <input type="password" name="current_password" placeholder="Current password" required>
+      <input type="password" name="new_password" placeholder="New password" required>
+      <button type="submit">Change Password</button>
+    </form>
+    <p style="font-size:0.9em;color:#666">If you forgot your password, use "Request Admin Reset" below and admin will reset it.</p>
+  </div>
+
+  <div class="card">
+    <h3>Request Username Change</h3>
+    <form method="post">
+      <input type="hidden" name="action" value="request_username_change">
+      <input name="new_username" placeholder="Desired new username" required>
+      <button type="submit">Request Username Change</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h3>Request Admin Reset (Forgot Password)</h3>
+    <form method="post">
+      <input type="hidden" name="action" value="request_admin_reset">
+      <p>If you cannot login and forgot your password, submit this request. Admin will reset and set a temporary password.</p>
+      <button type="submit">Request Admin Reset</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h3>Your Request History</h3>
+    {% if history %}
+      <table>
+        <tr><th>ID</th><th>Type</th><th>New Username</th><th>Status</th><th>Date</th></tr>
+        {% for h in history %}
+          <tr>
+            <td>{{ h.id }}</td>
+            <td>{{ h.request_type }}</td>
+            <td>{{ h.new_username or '-' }}</td>
+            <td>{{ h.status }}</td>
+            <td>{{ h.request_date }}</td>
+          </tr>
+        {% endfor %}
+      </table>
+    {% else %}
+      <p>No requests yet.</p>
+    {% endif %}
+  </div>
+
+</body>
+</html>
