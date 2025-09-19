@@ -2,6 +2,9 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 import psycopg2
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import redirect, url_for, jsonify, request
+from flask import Flask, render_template, request, redirect, url_for, session, flash
+import psycopg2
+from psycopg2.extras import RealDictCursor
 app = Flask(__name__)
 app.secret_key = "change_this_secret"
 
@@ -9,8 +12,10 @@ DB_CONF = {
     "host":"localhost",
     "database":"shopdb",
     "user":"postgres",
-    "password":"yourpassword"
+    "password":"2004"
 }
+def get_db():
+    return psycopg2.connect(**DB_CONF, cursor_factory=RealDictCursor)
 
 def get_db_connection():
     return psycopg2.connect(**DB_CONF)
@@ -139,20 +144,88 @@ def admin_delete_user(user_id):
 
 @app.route("/shopkeeper")
 def shopkeeper_dashboard():
-    user = current_user()
-    if not user or user["role"] != "shopkeeper":
-        return redirect(url_for("login"))
-    
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM products ORDER BY id;")
+    products = cur.fetchall()
+    cur.execute("""SELECT c.id, p.name, p.price, c.qty 
+                   FROM cart c JOIN products p ON c.product_id=p.id;""")
+    cart_items = cur.fetchall()
+    conn.close()
+    return render_template("shopkeeper.html", products=products, cart=cart_items)
+@app.route("/cart/add/<int:pid>", methods=["POST"])
+def add_to_cart(pid):
+    qty = int(request.form["qty"])
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("INSERT INTO cart (product_id, qty, added_by) VALUES (%s,%s,%s);",
+                (pid, qty, session.get("username", "keeper")))
+    conn.commit()
+    conn.close()
+    flash("Product added to cart.")
+    return redirect(url_for("shopkeeper_dashboard"))
+@app.route("/cart/pay", methods=["GET","POST"])
+def pay_cart():
     conn = get_db_connection()
     cur = conn.cursor()
-    # Get all products
-    cur.execute("SELECT id, name, price, stock FROM products")
-    products = cur.fetchall()
-    
-    # Optionally, fetch low-stock requests for this shopkeeper
-    cur.close(); conn.close()
-    return render_template("shopkeeper.html", username=user["username"], products=products)
 
+    if request.method == "POST":
+        # fetch all cart items
+        cur.execute("SELECT product_id, qty FROM cart;")
+        items = cur.fetchall()
+
+        if not items:
+            flash("Your cart is empty.")
+            return redirect(url_for("shopkeeper_dashboard"))
+
+        for pid, qty in items:
+            # deduct stock in products
+            cur.execute(
+                "UPDATE products SET stock = stock - %s WHERE id = %s",
+                (qty, pid)
+            )
+            # record sale (adjust this table to your schema)
+            cur.execute(
+                "INSERT INTO sales (product_id, qty) VALUES (%s,%s)",
+                (pid, qty)
+            )
+
+        # empty cart
+        cur.execute("DELETE FROM cart;")
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        flash("Payment successful, stock updated.")
+        return redirect(url_for("shopkeeper_dashboard"))
+
+    else:
+        # show confirmation page
+        cur.execute("""
+            SELECT c.product_id, p.name, c.qty, p.price
+            FROM cart c
+            JOIN products p ON c.product_id = p.id
+        """)
+        cart_items = cur.fetchall()
+        cur.close()
+        conn.close()
+        return render_template("cart_pay.html", cart_items=cart_items)
+
+
+
+
+
+@app.route("/cart/back")
+def back_cart():
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM cart;")
+    conn.commit()
+    conn.close()
+    flash("Cart cleared and products restored.")
+    return redirect(url_for("shopkeeper_dashboard"))
+# --- Add to Cart ---
 @app.route("/worker")
 def worker_dashboard():
     user = current_user()
@@ -422,25 +495,28 @@ def worker_add_product():
     cur.close(); conn.close()
 
     return redirect(url_for("worker_dashboard"))
-@app.route("/worker/refill_product/<int:pid>", methods=["POST"])
-def worker_refill_product(pid):
+@app.route("/worker/refill_product/<int:product_id>", methods=["POST"])
+def worker_refill_product(product_id):
     user = current_user()
     if not user or user["role"] != "worker":
         return jsonify({"error": "forbidden"}), 403
 
     qty = request.form.get("qty")
-    try:
-        qty = int(qty)
-        if qty <= 0:
-            raise ValueError
-    except ValueError:
-        return jsonify({"error": "invalid qty"}), 400
+    if not qty or not qty.isdigit():
+        return jsonify({"error": "invalid quantity"}), 400
+
+    qty = int(qty)
 
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("UPDATE products SET stock = stock + %s WHERE id=%s", (qty, pid))
+    # add stock
+    cur.execute(
+        "UPDATE products SET stock = stock + %s WHERE id = %s",
+        (qty, product_id)
+    )
     conn.commit()
-    cur.close(); conn.close()
+    cur.close()
+    conn.close()
 
     return redirect(url_for("worker_dashboard"))
 
@@ -448,4 +524,3 @@ def worker_refill_product(pid):
 
 if __name__=="__main__":
     app.run(debug=True, port=5000)
-
