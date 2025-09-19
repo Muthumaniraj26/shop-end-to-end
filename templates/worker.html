@@ -1,23 +1,471 @@
 <!doctype html>
-<title>Worker</title>
-<h2>Worker: {{username}}</h2>
-<a href="/logout">Logout</a>
-<hr>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Worker Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #4361ee;
+      --secondary: #3f37c9;
+      --success: #4cc9f0;
+      --danger: #f72585;
+      --warning: #f8961e;
+      --light: #f8f9fa;
+      --dark: #212529;
+      --gray: #6c757d;
+      --light-gray: #e9ecef;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f7fb;
+      color: #333;
+      line-height: 1.6;
+    }
+    
+    .container {
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      min-height: 100vh;
+    }
+    
+    /* Sidebar Styles */
+    .sidebar {
+      background: var(--primary);
+      color: white;
+      padding: 20px 0;
+      position: fixed;
+      width: 250px;
+      height: 100%;
+      overflow-y: auto;
+    }
+    
+    .brand {
+      padding: 0 20px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      margin-bottom: 20px;
+    }
+    
+    .brand h1 {
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .user-info {
+      padding: 0 20px;
+      margin-bottom: 30px;
+    }
+    
+    .user-info h3 {
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .nav-item {
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+    
+    .nav-item:hover, .nav-item.active {
+      background: rgba(255,255,255,0.1);
+    }
+    
+    .nav-item i {
+      width: 20px;
+      text-align: center;
+    }
+    
+    /* Main Content */
+    .main-content {
+      grid-column: 2;
+      padding: 20px 30px;
+    }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid var(--light-gray);
+    }
+    
+    .search-container {
+      position: relative;
+      width: 300px;
+    }
+    
+    .search-container input {
+      width: 100%;
+      padding: 10px 15px 10px 40px;
+      border: 1px solid var(--light-gray);
+      border-radius: 50px;
+      outline: none;
+      transition: all 0.3s;
+    }
+    
+    .search-container input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+    }
+    
+    .search-container i {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gray);
+    }
+    
+    .logout-btn {
+      background: var(--danger);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 50px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.3s;
+    }
+    
+    .logout-btn:hover {
+      background: #e20c74;
+    }
+    
+    /* Card Styles */
+    .card {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      margin-bottom: 25px;
+      overflow: hidden;
+    }
+    
+    .card-header {
+      padding: 15px 20px;
+      border-bottom: 1px solid var(--light-gray);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .card-body {
+      padding: 20px;
+    }
+    
+    /* Form Styles */
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
+    
+    .form-control {
+      width: 100%;
+      padding: 10px 15px;
+      border: 1px solid var(--light-gray);
+      border-radius: 5px;
+      transition: all 0.3s;
+    }
+    
+    .form-control:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+      outline: none;
+    }
+    
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: var(--secondary);
+    }
+    
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 0.875rem;
+    }
+    
+    /* Table Styles */
+    .table-container {
+      overflow-x: auto;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+    
+    th {
+      background-color: var(--light);
+      padding: 12px 15px;
+      text-align: left;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+    }
+    
+    td {
+      padding: 12px 15px;
+      border-bottom: 1px solid var(--light-gray);
+    }
+    
+    tr:last-child td {
+      border-bottom: none;
+    }
+    
+    tr.low-stock {
+      background-color: #fff0f0;
+    }
+    
+    tr.low-stock:hover {
+      background-color: #ffe6e6;
+    }
+    
+    tr:hover {
+      background-color: #f8f9fa;
+    }
+    
+    .stock-warning {
+      color: var(--danger);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .refill-form {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .refill-input {
+      width: 80px;
+      padding: 6px 10px;
+      border: 1px solid var(--light-gray);
+      border-radius: 5px;
+    }
+    
+    /* Responsive */
+    @media (max-width: 992px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+      
+      .sidebar {
+        display: none;
+      }
+      
+      .main-content {
+        grid-column: 1;
+      }
+    }
+    
+    @media (max-width: 576px) {
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+      }
+      
+      .search-container {
+        width: 100%;
+      }
+      
+      .refill-form {
+        flex-direction: column;
+        gap: 5px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="brand">
+        <h1><i class="fas fa-warehouse"></i> StockPro</h1>
+      </div>
+      
+      <div class="user-info">
+        <h3><i class="fas fa-user-circle"></i> {{ username }}</h3>
+        <p>Worker Dashboard</p>
+      </div>
+      
+      <div class="nav-menu">
+        <div class="nav-item active">
+          <i class="fas fa-boxes"></i> Products
+        </div>
+        <div class="nav-item">
+          <i class="fas fa-chart-line"></i> Analytics
+        </div>
+        <div class="nav-item">
+          <i class="fas fa-cog"></i> Settings
+        </div>
+      </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="header">
+        <h2>Product Management</h2>
+        <div class="search-container">
+          <i class="fas fa-search"></i>
+          <input type="text" id="searchInput" onkeyup="searchProduct()" placeholder="Search products...">
+        </div>
+        <a href="/logout" class="logout-btn">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+      </div>
+      
+      <!-- Add Product Card -->
+      <div class="card">
+        <div class="card-header">
+          <h3><i class="fas fa-plus-circle"></i> Add New Product</h3>
+        </div>
+        <div class="card-body">
+          <form method="post" action="/worker/add_product" class="form-inline">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+              <div class="form-group">
+                <label for="name">Product Name</label>
+                <input type="text" class="form-control" name="name" id="name" required>
+              </div>
+              <div class="form-group">
+                <label for="price">Price ($)</label>
+                <input type="number" class="form-control" name="price" id="price" step="0.01" min="0" required>
+              </div>
+              <div class="form-group">
+                <label for="stock">Initial Stock</label>
+                <input type="number" class="form-control" name="stock" id="stock" min="0" required>
+              </div>
+              <div class="form-group" style="display: flex; align-items: flex-end;">
+                <button type="submit" class="btn btn-primary">
+                  <i class="fas fa-plus"></i> Add Product
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+      
+      <!-- Products Table Card -->
+      <div class="card">
+        <div class="card-header">
+          <h3><i class="fas fa-boxes"></i> Product Inventory</h3>
+          <span class="badge">{{ products|length }} products</span>
+        </div>
+        <div class="card-body">
+          <div class="table-container">
+            <table id="productTable">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Price</th>
+                  <th>Stock</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for p in products %}
+                  <tr class="{% if p[3] <= 10 %}low-stock{% endif %}">
+                    <td>#{{ p[0] }}</td>
+                    <td>{{ p[1] }}</td>
+                    <td>${{ p[2] }}</td>
+                    <td>
+                      {{ p[3] }}
+                      {% if p[3] <= 10 %}
+                        <div class="stock-warning">
+                          <i class="fas fa-exclamation-triangle"></i> Low stock
+                        </div>
+                      {% endif %}
+                    </td>
+                    <td>
+                      <form method="post" action="/worker/refill_product/{{ p[0] }}" class="refill-form">
+                        <input type="number" class="refill-input" name="qty" min="1" placeholder="Qty" required>
+                        <button type="submit" class="btn btn-primary btn-sm">
+                          <i class="fas fa-plus"></i> Refill
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-<h3>Add Product</h3>
-<form method="post" action="/worker/add_product">
-  Name: <input name="name" required>
-  Price: <input name="price" type="number" required>
-  Stock: <input name="stock" type="number" required>
-  <button type="submit">Add</button>
-</form>
-
-<h3>Products</h3>
-<table border="1">
-<tr><th>ID</th><th>Name</th><th>Price</th><th>Stock</th></tr>
-{% for p in products %}
-<tr>
-<td>{{p[0]}}</td><td>{{p[1]}}</td><td>{{p[2]}}</td><td>{{p[3]}}</td>
-</tr>
-{% endfor %}
-</table>
+  <script>
+    function searchProduct() {
+      const input = document.getElementById("searchInput").value.toLowerCase();
+      const table = document.getElementById("productTable");
+      const rows = table.getElementsByTagName("tr");
+      
+      // Start from 1 to skip the header row
+      for (let i = 1; i < rows.length; i++) {
+        const nameCell = rows[i].getElementsByTagName("td")[1];
+        if (nameCell) {
+          const nameText = nameCell.textContent.toLowerCase();
+          rows[i].style.display = nameText.includes(input) ? "" : "none";
+        }
+      }
+    }
+    
+    // Add some interactive effects
+    document.addEventListener('DOMContentLoaded', function() {
+      const buttons = document.querySelectorAll('button');
+      buttons.forEach(button => {
+        button.addEventListener('mouseenter', function() {
+          this.style.transform = 'translateY(-2px)';
+          this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+        });
+        
+        button.addEventListener('mouseleave', function() {
+          this.style.transform = 'translateY(0)';
+          this.style.boxShadow = 'none';
+        });
+      });
+    });
+  </script>
+</body>
+</html>
