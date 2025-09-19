@@ -156,9 +156,16 @@ def shopkeeper_dashboard():
 @app.route("/worker")
 def worker_dashboard():
     user = current_user()
-    if not user or user["role"]!="worker":
+    if not user or user["role"] != "worker":
         return redirect(url_for("login"))
-    return render_template("worker.html", username=user["username"])
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, name, price, stock FROM products ORDER BY id")
+    products = cur.fetchall()
+    cur.close(); conn.close()
+
+    return render_template("worker.html", products=products, user=user)
 
 # ---------------- Admin APIs -----------------
 @app.route("/admin/add_user", methods=["POST"])
@@ -243,8 +250,7 @@ def admin_add_product():
     if not user or user["role"] != "admin":
         return redirect(url_for("login"))
     
-    # get data from form
-    name = request.form.get("name")
+    name = request.form.get("name").strip().lower()
     price = request.form.get("price")
     stock = request.form.get("stock")
     
@@ -259,7 +265,22 @@ def admin_add_product():
     
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("INSERT INTO products (name, price, stock) VALUES (%s,%s,%s)", (name, price, stock))
+
+    # Check if product already exists
+    cur.execute("SELECT id, stock FROM products WHERE LOWER(name)=%s", (name,))
+    row = cur.fetchone()
+
+    if row:
+        # Product exists → update stock only
+        pid, current_stock = row
+        new_stock = current_stock + stock
+        cur.execute("UPDATE products SET stock=%s, price=%s WHERE id=%s", 
+                    (new_stock, price, pid))
+    else:
+        # Insert new product
+        cur.execute("INSERT INTO products (name, price, stock) VALUES (%s,%s,%s)", 
+                    (name, price, stock))
+    
     conn.commit()
     cur.close(); conn.close()
     
@@ -278,6 +299,35 @@ def admin_delete_product(pid):
     conn.commit()
     cur.close(); conn.close()
     return redirect(url_for("admin_dashboard"))
+@app.route("/admin/settings", methods=["GET", "POST"])
+def admin_settings():
+    user = current_user()  # however you fetch the logged-in user
+    message = None
+    history = []  # query from DB if you track requests
+    
+    if request.method == "POST":
+        action = request.form.get("action")
+
+        if action == "change_password":
+            current_password = request.form.get("current_password")
+            new_password = request.form.get("new_password")
+            # TODO: verify current_password, then update DB
+            message = "Password changed successfully."
+
+        elif action == "request_username_change":
+            new_username = request.form.get("new_username")
+            # TODO: insert into username change requests table
+            message = "Username change request submitted."
+
+        elif action == "request_admin_reset":
+            # TODO: insert reset request into DB
+            message = "Admin reset request submitted."
+
+    return render_template("settings.html",
+                           user=user,
+                           message=message,
+                           history=history)
+
 
 
 
@@ -337,22 +387,60 @@ def worker_add_product():
     if not user or user["role"] != "worker":
         return jsonify({"error": "forbidden"}), 403
 
-    name = request.form.get("name")
+    name = request.form.get("name").strip().lower()
     price = request.form.get("price")
     stock = request.form.get("stock")
 
     if not name or price is None or stock is None:
         return jsonify({"error": "invalid data"}), 400
 
+    try:
+        price = float(price)
+        stock = int(stock)
+    except ValueError:
+        return jsonify({"error": "Price or stock invalid"}), 400
+
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute(
-        "INSERT INTO products (name, price, stock) VALUES (%s,%s,%s)",
-        (name, float(price), int(stock))
-    )
+
+    # Check if product already exists
+    cur.execute("SELECT id, stock FROM products WHERE LOWER(name)=%s", (name,))
+    row = cur.fetchone()
+
+    if row:
+        # Refill existing product stock
+        pid, current_stock = row
+        new_stock = current_stock + stock
+        cur.execute("UPDATE products SET stock=%s, price=%s WHERE id=%s", 
+                    (new_stock, price, pid))
+    else:
+        # Insert new product
+        cur.execute("INSERT INTO products (name, price, stock) VALUES (%s,%s,%s)", 
+                    (name, price, stock))
+
     conn.commit()
-    cur.close()
-    conn.close()
+    cur.close(); conn.close()
+
+    return redirect(url_for("worker_dashboard"))
+@app.route("/worker/refill_product/<int:pid>", methods=["POST"])
+def worker_refill_product(pid):
+    user = current_user()
+    if not user or user["role"] != "worker":
+        return jsonify({"error": "forbidden"}), 403
+
+    qty = request.form.get("qty")
+    try:
+        qty = int(qty)
+        if qty <= 0:
+            raise ValueError
+    except ValueError:
+        return jsonify({"error": "invalid qty"}), 400
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("UPDATE products SET stock = stock + %s WHERE id=%s", (qty, pid))
+    conn.commit()
+    cur.close(); conn.close()
 
     return redirect(url_for("worker_dashboard"))
 
