@@ -1,0 +1,11 @@
+shop_app/
+│── main.py
+│── database.sql
+│── templates/
+│    ├── login.html
+│    ├── signup.html
+│    ├── shopkeeper_dashboard.html
+│    ├── worker_dashboard.html
+│    ├── admin_dashboard.html
+│── static/
+     └── style.css
