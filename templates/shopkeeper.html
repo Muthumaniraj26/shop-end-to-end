@@ -1,25 +1,329 @@
-<!doctype html>
-<title>Shopkeeper</title>
-<h1>Shopkeeper: {{ username }}</h1>
-<a href="{{ url_for('logout') }}">Logout</a>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopkeeper Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --success: #4cc9f0;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --border: #dee2e6;
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fb;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+        
+        /* Header Styles */
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .welcome {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .welcome i {
+            font-size: 1.5rem;
+        }
+        
+        .logout-btn {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: var(--transition);
+        }
+        
+        .logout-btn:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Dashboard Cards */
+        .dashboard {
+            padding: 2rem 0;
+        }
+        
+        .dashboard-header {
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .dashboard-title {
+            font-size: 1.8rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        /* Products Table */
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+        
+        .card-header {
+            padding: 1rem 1.5rem;
+            background-color: var(--light);
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+            overflow-x: auto;
+        }
+        
+        .products-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .products-table th {
+            background-color: #f1f5fd;
+            text-align: left;
+            padding: 1rem;
+            font-weight: 600;
+            color: var(--gray);
+            border-bottom: 2px solid var(--border);
+        }
+        
+        .products-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .products-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .products-table tr:hover {
+            background-color: #f9fafd;
+        }
+        
+        .stock-info {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .stock-high {
+            color: #28a745;
+        }
+        
+        .stock-medium {
+            color: #ffc107;
+        }
+        
+        .stock-low {
+            color: #dc3545;
+        }
+        
+        /* Form Elements */
+        .qty-input {
+            width: 70px;
+            padding: 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .sell-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: var(--transition);
+        }
+        
+        .sell-btn:hover {
+            background-color: var(--secondary);
+        }
+        
+        .sell-form {
+            display: flex;
+            gap: 5px;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .products-table {
+                min-width: 700px;
+            }
+            
+            .card-body {
+                padding: 1rem;
+            }
+            
+            .dashboard-title {
+                font-size: 1.5rem;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+        }
+        
+        /* Animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .products-table tr {
+            animation: fadeIn 0.3s ease-out;
+            animation-fill-mode: both;
+        }
+        
+        .products-table tr:nth-child(1) { animation-delay: 0.1s; }
+        .products-table tr:nth-child(2) { animation-delay: 0.2s; }
+        .products-table tr:nth-child(3) { animation-delay: 0.3s; }
+        .products-table tr:nth-child(4) { animation-delay: 0.4s; }
+        .products-table tr:nth-child(5) { animation-delay: 0.5s; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="welcome">
+                    <i class="fas fa-store"></i>
+                    <h1>Shopkeeper: {{ username }}</h1>
+                </div>
+                <a href="{{ url_for('logout') }}" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+    </header>
+    
+    <main class="dashboard">
+        <div class="container">
+            <div class="dashboard-header">
+                <h2 class="dashboard-title">
+                    <i class="fas fa-box-open"></i> Products Inventory
+                </h2>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-list"></i> Products Available for Sale
+                </div>
+                <div class="card-body">
+                    <table class="products-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Price</th>
+                                <th>Stock</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in products %}
+                            <tr>
+                                <td>#{{ p[0] }}</td>
+                                <td>{{ p[1] }}</td>
+                                <td>${{ p[2] }}</td>
+                                <td>
+                                    <div class="stock-info">
+                                        <i class="fas fa-box{% if p[3] > 10 %} stock-high{% elif p[3] > 5 %} stock-medium{% else %} stock-low{% endif %}"></i>
+                                        {{ p[3] }} units
+                                    </div>
+                                </td>
+                                <td>
+                                    <form class="sell-form" action="{{ url_for('shopkeeper_sell_product', pid=p[0]) }}" method="POST">
+                                        <input type="number" class="qty-input" name="qty" value="1" min="1" max="{{ p[3] }}">
+                                        <button type="submit" class="sell-btn">
+                                            <i class="fas fa-cash-register"></i> Sell
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
 
-<h2>Products to sell</h2>
-<table border="1">
-    <tr>
-        <th>ID</th><th>Name</th><th>Price</th><th>Stock</th><th>Sell</th>
-    </tr>
-    {% for p in products %}
-    <tr>
-        <td>{{ p[0] }}</td>
-        <td>{{ p[1] }}</td>
-        <td>{{ p[2] }}</td>
-        <td>{{ p[3] }}</td>
-        <td>
-            <form action="{{ url_for('shopkeeper_sell_product', pid=p[0]) }}" method="POST">
-                <input type="number" name="qty" value="1" min="1" max="{{ p[3] }}">
-                <button type="submit">Sell</button>
-            </form>
-        </td>
-    </tr>
-    {% endfor %}
-</table>
+    <script>
+        // Add confirmation before selling a product
+        document.querySelectorAll('.sell-form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                const qtyInput = this.querySelector('input[name="qty"]');
+                const productName = this.closest('tr').querySelector('td:nth-child(2)').textContent;
+                
+                if (!confirm(`Confirm sale of ${qtyInput.value} unit(s) of ${productName}?`)) {
+                    e.preventDefault();
+                }
+            });
+        });
+        
+        // Add input validation for quantity
+        document.querySelectorAll('.qty-input').forEach(input => {
+            input.addEventListener('change', function() {
+                if (this.value < 1) this.value = 1;
+                if (this.value > parseInt(this.max)) this.value = this.max;
+            });
+        });
+    </script>
+</body>
+</html>
