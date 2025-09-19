@@ -1,94 +1,534 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        table, th, td {
-            border: 1px solid black;
-            border-collapse: collapse;
-            padding: 5px;
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --success: #4cc9f0;
+            --danger: #f72585;
+            --warning: #f8961e;
+            --info: #4895ef;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+            --sidebar-width: 250px;
+            --header-height: 70px;
         }
-        input, select { margin: 5px; }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fb;
+            color: #333;
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--primary);
+            color: white;
+            height: 100vh;
+            position: fixed;
+            padding: 20px 0;
+            transition: all 0.3s;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+        }
+        
+        .sidebar-header h3 {
+            margin-left: 10px;
+            font-weight: 600;
+        }
+        
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+        
+        .sidebar-menu ul {
+            list-style: none;
+        }
+        
+        .sidebar-menu li {
+            margin-bottom: 5px;
+        }
+        
+        .sidebar-menu a {
+            display: block;
+            padding: 12px 20px;
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            transition: all 0.3s;
+            border-left: 4px solid transparent;
+        }
+        
+        .sidebar-menu a:hover, .sidebar-menu a.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-left: 4px solid var(--success);
+        }
+        
+        .sidebar-menu i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+        }
+        
+        /* Header */
+        .header {
+            height: var(--header-height);
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+        
+        .user-info img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+            background: var(--light-gray);
+        }
+        
+        .logout-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .logout-btn:hover {
+            background: #d11474;
+        }
+        
+        /* Content Area */
+        .content {
+            padding: 30px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+        
+        .card-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--light-gray);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-header h2 {
+            font-size: 1.5rem;
+            color: var(--dark);
+        }
+        
+        .card-body {
+            padding: 20px;
+        }
+        
+        /* Forms */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--dark);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--light-gray);
+            border-radius: 5px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--secondary);
+        }
+        
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--light-gray);
+        }
+        
+        th {
+            background-color: var(--light);
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .action-btn {
+            padding: 6px 12px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .btn-delete {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-delete:hover {
+            background: #d11474;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 20px;
+            color: var(--gray);
+            font-style: italic;
+        }
+        
+        /* Responsive */
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 70px;
+                overflow: hidden;
+            }
+            
+            .sidebar-header h3, .sidebar-menu span {
+                display: none;
+            }
+            
+            .sidebar-menu i {
+                margin-right: 0;
+                font-size: 20px;
+            }
+            
+            .main-content {
+                margin-left: 70px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                padding: 0 15px;
+            }
+            
+            .content {
+                padding: 15px;
+            }
+            
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .card-header h2 {
+                margin-bottom: 10px;
+            }
+        }
     </style>
 </head>
 <body>
-    <h1>Welcome, {{ username }} (Admin)</h1>
-    <a href="{{ url_for('logout') }}">Logout</a>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <i class="fas fa-shield-alt fa-2x"></i>
+            <h3>Admin Panel</h3>
+        </div>
+        <div class="sidebar-menu">
+            <ul>
+                <li><a href="#" class="active"><i class="fas fa-home"></i> <span>Dashboard</span></a></li>
+                <li><a href="#users-section"><i class="fas fa-users"></i> <span>Users</span></a></li>
+                <li><a href="#products-section"><i class="fas fa-box"></i> <span>Products</span></a></li>
+                <li><a href="#"><i class="fas fa-chart-bar"></i> <span>Reports</span></a></li>
+                <li><a href="#"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
+            </ul>
+        </div>
+    </div>
 
-    <!-- Add User Form -->
-    <h2>Add User</h2>
-    <form action="{{ url_for('admin_add_user_form') }}" method="POST">
-        Username: <input type="text" name="username" required>
-        Password: <input type="password" name="password" required>
-        Role: 
-        <select name="role" required>
-            <option value="worker">Worker</option>
-            <option value="shopkeeper">Shopkeeper</option>
-        </select>
-        <button type="submit">Add User</button>
-    </form>
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <div class="header">
+            <div class="user-info">
+                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0yMCAydjRhMiAyIDAgMCAxLTIgMkg2YTIgMiAwIDAgMS0yLTJWMiI+PC9wYXRoPjxwYXRoIGQ9Ik0yMiAxMHYzYTIgMiAwIDAgMS0yIDJINGEyIDIgMCAwIDEtMi0ydi0zIj48L3BhdGg+PHJlY3QgeD0iOCIgeT0iMTQiIHdpZHRoPSI4IiBoZWlnaHQ9IjgiIHJ4PSIxIiByeT0iMSI+PC9yZWN0Pjwvc3ZnPg==" alt="User">
+                <div>
+                    <strong>{{ username }}</strong> (Admin)
+                </div>
+            </div>
+            <a href="{{ url_for('logout') }}" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
 
-    <!-- Users Table -->
-    <h2>Users</h2>
-    <table>
-        <tr>
-            <th>ID</th>
-            <th>Username</th>
-            <th>Role</th>
-            <th>Action</th>
-        </tr>
-        {% for u in users %}
-        <tr>
-            <td>{{ u[0] }}</td>
-            <td>{{ u[1] }}</td>
-            <td>{{ u[2] }}</td>
-            <td>
-                <a href="{{ url_for('admin_delete_user', user_id=u[0]) }}" onclick="return confirm('Delete user {{ u[1] }}?')">Delete</a>
-            </td>
-        </tr>
-        {% endfor %}
-        {% if users|length == 0 %}
-        <tr>
-            <td colspan="4">No users found</td>
-        </tr>
-        {% endif %}
-    </table>
+        <!-- Content Area -->
+        <div class="content">
+            <!-- Dashboard Stats -->
+            <div class="card">
+                <div class="card-body">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                        <div style="background: linear-gradient(45deg, var(--primary), var(--info)); color: white; padding: 20px; border-radius: 10px;">
+                            <h3>{{ users|length }}</h3>
+                            <p>Total Users</p>
+                            <i class="fas fa-users fa-2x" style="float: right; opacity: 0.5;"></i>
+                        </div>
+                        <div style="background: linear-gradient(45deg, var(--success), var(--info)); color: white; padding: 20px; border-radius: 10px;">
+                            <h3>{{ products|length }}</h3>
+                            <p>Total Products</p>
+                            <i class="fas fa-box fa-2x" style="float: right; opacity: 0.5;"></i>
+                        </div>
+                        <div style="background: linear-gradient(45deg, var(--warning), var(--danger)); color: white; padding: 20px; border-radius: 10px;">
+                            <h3>12</h3>
+                            <p>Pending Tasks</p>
+                            <i class="fas fa-tasks fa-2x" style="float: right; opacity: 0.5;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-    <!-- Add Product Form -->
-    <h2>Add Product</h2>
-    <form action="{{ url_for('admin_add_product') }}" method="POST">
-        Name: <input type="text" name="name" required>
-        Price: <input type="text" name="price" required>
-        Stock: <input type="text" name="stock" required>
-        <button type="submit">Add Product</button>
-    </form>
+            <!-- Users Section -->
+            <div class="card" id="users-section">
+                <div class="card-header">
+                    <h2><i class="fas fa-users"></i> User Management</h2>
+                </div>
+                <div class="card-body">
+                    <h3 style="margin-bottom: 20px;">Add User</h3>
+                    <form action="{{ url_for('admin_add_user_form') }}" method="POST" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                        <div class="form-group">
+                            <label for="username">Username</label>
+                            <input type="text" id="username" name="username" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <input type="password" id="password" name="password" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="role">Role</label>
+                            <select id="role" name="role" class="form-control" required>
+                                <option value="worker">Worker</option>
+                                <option value="shopkeeper">Shopkeeper</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="display: flex; align-items: flex-end;">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Add User
+                            </button>
+                        </div>
+                    </form>
 
-    <!-- Products Table -->
-    <h2>Products</h2>
-    <table>
-        <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Price</th>
-            <th>Stock</th>
-            <th>Action</th>
-        </tr>
-        {% for p in products %}
-        <tr>
-            <td>{{ p[0] }}</td>
-            <td>{{ p[1] }}</td>
-            <td>{{ p[2] }}</td>
-            <td>{{ p[3] }}</td>
-            <td>
-                <a href="{{ url_for('admin_delete_product', pid=p[0]) }}" onclick="return confirm('Delete product {{ p[1] }}?')">Delete</a>
-            </td>
-        </tr>
-        {% endfor %}
-        {% if products|length == 0 %}
-        <tr>
-            <td colspan="5">No products found</td>
-        </tr>
-        {% endif %}
-    </table>
+                    <div style="margin-top: 40px;">
+                        <h3 style="margin-bottom: 20px;">Users List</h3>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Username</th>
+                                        <th>Role</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for u in users %}
+                                    <tr>
+                                        <td>{{ u[0] }}</td>
+                                        <td>{{ u[1] }}</td>
+                                        <td><span style="background: {% if u[2] == 'worker' %}#4cc9f0{% else %}#3f37c9{% endif %}; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px;">{{ u[2] }}</span></td>
+                                        <td>
+                                            <a href="{{ url_for('admin_delete_user', user_id=u[0]) }}" class="action-btn btn-delete" onclick="return confirm('Delete user {{ u[1] }}?')">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                    {% if users|length == 0 %}
+                                    <tr>
+                                        <td colspan="4" class="no-data">No users found</td>
+                                    </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products Section -->
+            <div class="card" id="products-section">
+                <div class="card-header">
+                    <h2><i class="fas fa-box"></i> Product Management</h2>
+                </div>
+                <div class="card-body">
+                    <h3 style="margin-bottom: 20px;">Add Product</h3>
+                    <form action="{{ url_for('admin_add_product') }}" method="POST" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                        <div class="form-group">
+                            <label for="name">Product Name</label>
+                            <input type="text" id="name" name="name" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="price">Price</label>
+                            <input type="text" id="price" name="price" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="stock">Stock</label>
+                            <input type="text" id="stock" name="stock" class="form-control" required>
+                        </div>
+                        <div class="form-group" style="display: flex; align-items: flex-end;">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Add Product
+                            </button>
+                        </div>
+                    </form>
+
+                    <div style="margin-top: 40px;">
+                        <h3 style="margin-bottom: 20px;">Products List</h3>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Price</th>
+                                        <th>Stock</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for p in products %}
+                                    <tr>
+                                        <td>{{ p[0] }}</td>
+                                        <td>{{ p[1] }}</td>
+                                        <td>${{ p[2] }}</td>
+                                        <td><span style="background: {% if p[3] > 10 %}#4cc9f0{% else %}#f8961e{% endif %}; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px;">{{ p[3] }} in stock</span></td>
+                                        <td>
+                                            <a href="{{ url_for('admin_delete_product', pid=p[0]) }}" class="action-btn btn-delete" onclick="return confirm('Delete product {{ p[1] }}?')">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                    {% if products|length == 0 %}
+                                    <tr>
+                                        <td colspan="5" class="no-data">No products found</td>
+                                    </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple JavaScript for active menu item
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuItems = document.querySelectorAll('.sidebar-menu a');
+            
+            menuItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    menuItems.forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+            
+            // Smooth scrolling for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    if (this.getAttribute('href') !== '#') {
+                        e.preventDefault();
+                        const target = document.querySelector(this.getAttribute('href'));
+                        if (target) {
+                            window.scrollTo({
+                                top: target.offsetTop - 90,
+                                behavior: 'smooth'
+                            });
+                        }
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>
