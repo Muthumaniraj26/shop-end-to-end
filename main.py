@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 import psycopg2
 from werkzeug.security import generate_password_hash, check_password_hash
-
+from flask import redirect, url_for, jsonify, request
 app = Flask(__name__)
 app.secret_key = "change_this_secret"
 
@@ -334,33 +334,29 @@ def shopkeeper_sell_product(pid):
 @app.route("/worker/add_product", methods=["POST"])
 def worker_add_product():
     user = current_user()
-    if not user or user["role"]!="worker":
-        return jsonify({"error":"forbidden"}),403
-    data = request.json
-    name = data.get("name")
-    price = data.get("price")
-    stock = data.get("stock")
-    if not name or price is None or stock is None:
-        return jsonify({"error":"invalid data"}),400
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("INSERT INTO products (name, price, stock) VALUES (%s,%s,%s)", (name, price, stock))
-    conn.commit()
-    cur.close(); conn.close()
-    return jsonify({"message":f"Product '{name}' added by worker"})
-@app.route("/worker/refill_product/<int:pid>", methods=["POST"])
-def worker_refill_product(pid):
-    user = current_user()
-    if not user or user["role"] not in ["worker","admin"]:
-        return redirect(url_for("login"))
+    if not user or user["role"] != "worker":
+        return jsonify({"error": "forbidden"}), 403
 
-    qty = int(request.form.get("qty", 0))
+    name = request.form.get("name")
+    price = request.form.get("price")
+    stock = request.form.get("stock")
+
+    if not name or price is None or stock is None:
+        return jsonify({"error": "invalid data"}), 400
+
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("UPDATE products SET stock = stock + %s WHERE id=%s", (qty, pid))
+    cur.execute(
+        "INSERT INTO products (name, price, stock) VALUES (%s,%s,%s)",
+        (name, float(price), int(stock))
+    )
     conn.commit()
-    cur.close(); conn.close()
+    cur.close()
+    conn.close()
+
     return redirect(url_for("worker_dashboard"))
+
+
 
 if __name__=="__main__":
     app.run(debug=True, port=5000)
