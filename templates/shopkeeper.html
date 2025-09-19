@@ -452,11 +452,10 @@
             <i class="fas fa-credit-card"></i> Pay
         </button>
     </form>
-    <form action="{{ url_for('back_cart') }}" method="post" style="display:inline;">
-        <button type="submit" class="btn btn-danger">
-            <i class="fas fa-undo"></i> Back
-        </button>
-    </form>
+    <form action="{{ url_for('back_cart') }}" method="get">
+    <button type="submit" class="btn">Back</button>
+</form>
+
 </div>
 
 
