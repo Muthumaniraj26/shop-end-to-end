@@ -3,9 +3,9 @@ shop_app/
 │── database.sql
 │── templates/
 │    ├── login.html
-│    ├── signup.html
-│    ├── shopkeeper_dashboard.html
-│    ├── worker_dashboard.html
-│    ├── admin_dashboard.html
+│    ├── settings.html
+│    ├── shopkeeper.html
+│    ├── worker.html
+│    ├── admin.html
 │── static/
      └── style.css
