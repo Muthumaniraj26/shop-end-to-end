@@ -1,0 +1,13 @@
+              List of relations
+ Schema |      Name       | Type  |  Owner
+--------+-----------------+-------+----------
+ public | bill_items      | table | postgres
+ public | bills           | table | postgres
+ public | cart            | table | postgres
+ public | change_requests | table | postgres
+ public | products        | table | postgres
+ public | refill_requests | table | postgres
+ public | sales           | table | postgres
+ public | stock_history   | table | postgres
+ public | users           | table | postgres
+(9 rows)
