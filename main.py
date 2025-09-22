@@ -2,9 +2,12 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 import psycopg2
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import redirect, url_for, jsonify, request
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file
 import psycopg2
 from psycopg2.extras import RealDictCursor
+from fpdf import FPDF
+import os
+import datetime
 app = Flask(__name__)
 app.secret_key = "change_this_secret"
 
@@ -19,6 +22,7 @@ def get_db():
 
 def get_db_connection():
     return psycopg2.connect(**DB_CONF)
+
 
 # Initialize DB and create default admin
 def init_db():
@@ -164,40 +168,89 @@ def add_to_cart(pid):
     conn.close()
     flash("Product added to cart.")
     return redirect(url_for("shopkeeper_dashboard"))
-@app.route("/cart/pay", methods=["GET","POST"])
+from flask import request, render_template, flash, send_file
+from fpdf import FPDF
+import os, datetime
+
+@app.route("/cart/pay", methods=["GET", "POST"])
 def pay_cart():
     conn = get_db_connection()
     cur = conn.cursor()
 
+    # Fetch cart items for display
+    cur.execute("""
+        SELECT p.name, c.qty, p.price, c.product_id
+        FROM cart c
+        JOIN products p ON c.product_id = p.id
+    """)
+    cart_items = cur.fetchall()
+
+    total = sum(price * qty for name, qty, price, pid in cart_items)
+
     if request.method == "POST":
-        # handle payment
-        cur.execute("SELECT product_id, qty FROM cart;")
-        items = cur.fetchall()
-        for pid, qty in items:
-            cur.execute("UPDATE products SET stock=stock-%s WHERE id=%s",(qty,pid))
-            cur.execute("INSERT INTO sales (product_id,qty) VALUES (%s,%s)",(pid,qty))
+        customer_name = request.form.get("customer_name")
+        payment_method = request.form.get("payment_method")
+
+        # Generate PDF first
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", "", 16)
+        pdf.cell(0, 10, "Shop Bill", ln=True, align="C")
+        pdf.ln(5)
+        pdf.set_font("Arial", "", 12)
+        pdf.cell(0, 10, f"Customer: {customer_name}", ln=True)
+        pdf.cell(0, 10, f"Payment Method: {payment_method}", ln=True)
+        pdf.ln(5)
+
+        pdf.cell(70, 10, "Product", border=1)
+        pdf.cell(30, 10, "Qty", border=1)
+        pdf.cell(30, 10, "Price", border=1)
+        pdf.cell(30, 10, "Total", border=1, ln=True)
+
+        for name, qty, price, pid in cart_items:
+            line_total = price * qty
+            pdf.cell(70, 10, name, border=1)
+            pdf.cell(30, 10, str(qty), border=1)
+            pdf.cell(30, 10, f"{price:.2f}", border=1)
+            pdf.cell(30, 10, f"{line_total:.2f}", border=1, ln=True)
+
+        pdf.ln(5)
+        pdf.cell(0, 10, f"Total Paid: {total:.2f}", ln=True)
+
+        # Save PDF
+        os.makedirs("bills", exist_ok=True)
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        pdf_path = f"bills/bill_{timestamp}.pdf"
+        pdf.output(pdf_path)
+
+        # Deduct stock and log sales **after PDF is generated**
+        for name, qty, price, pid in cart_items:
+            cur.execute("UPDATE products SET stock = stock - %s WHERE id = %s", (qty, pid))
+            cur.execute("INSERT INTO sales (product_id, qty) VALUES (%s, %s)", (pid, qty))
+
+        # Clear cart
         cur.execute("DELETE FROM cart;")
         conn.commit()
         cur.close()
         conn.close()
-        flash("Payment successful")
-        return redirect(url_for("shopkeeper_dashboard"))
 
-    else:
-        # handle GET: show confirmation page (safe to show empty cart)
-        cur.execute("""
-            SELECT c.product_id,p.name,c.qty,p.price
-            FROM cart c
-            JOIN products p ON c.product_id=p.id
-        """)
-        cart_items = cur.fetchall()
-        cur.close()
-        conn.close()
-        return render_template("cart_pay.html", cart_items=cart_items)
+        flash(f"Payment successful via {payment_method} ✅")
+        # Return PDF first, then reload cart page
+        return send_file(pdf_path, as_attachment=True)
 
+    cur.close()
+    conn.close()
+    return render_template("cart_pay.html", cart_items=cart_items, total=total)
 
-
-
+@app.route("/cart")
+def cart_view():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT p.name, c.qty, p.price, c.product_id FROM cart c JOIN products p ON c.product_id = p.id")
+    cart_items = cur.fetchall()
+    cur.close()
+    conn.close()
+    return render_template("cart_pay.html", cart_items=cart_items)
 
 
 @app.route("/cart/back", methods=["GET", "POST"])
